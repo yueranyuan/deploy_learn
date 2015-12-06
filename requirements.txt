@@ -1,0 +1,8 @@
+Fabric==1.10.2
+argparse==1.2.1
+ecdsa==0.13
+numpy==1.10.1
+paramiko==1.16.0
+pycrypto==2.6.1
+scipy==0.16.1
+wsgiref==0.1.2
