@@ -1,10 +1,11 @@
+import os
 import datetime
 from random import randint
 import json
 
 
 __LOG_FILE__ = None
-
+TIME_FORMAT = "%Y_%m_%d_%H_%M_%S"
 
 def set_log_file(log_file):
     global __LOG_FILE__
@@ -40,11 +41,17 @@ def gen_log_name(uid=None):
     if uid is None:
         uid = str(randint(0, 99999))
     return '{time}_{uid}'.format(
-        time=datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),
+        time=datetime.datetime.now().strftime(TIME_FORMAT),
         uid=uid)
 
+def parse_log_name(fname):
+    fname = os.path.splitext(fname)[0]
+    toks = fname.split('_')
+    t_str, uid = '_'.join(toks[:-1]), toks[-1]
+    t = datetime.datetime.strptime(t_str, TIME_FORMAT)
+    return t, uid
 
-# the following two functions are copied from http://wordaligned.org/articles/echo
+# the following functions are copied from http://wordaligned.org/articles/echo
 # and lightly modified
 
 import sys

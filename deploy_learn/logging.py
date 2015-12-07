@@ -8,7 +8,7 @@ class TrialLog(object):
     def __init__(self, key, params):
         self.key = key
         self.lines = []
-        self.log_name = os.path.join('logs', key + '.csv')
+        self.log_name = os.path.join(LOG_FOLDER_PATH, key + '.csv')
         try:
             os.makedirs(os.path.dirname(self.log_name))
         except OSError:
@@ -16,7 +16,7 @@ class TrialLog(object):
         self.headers = []
 
         # write params
-        param_file_name = os.path.join('logs', key + '.json')
+        param_file_name = os.path.join(LOG_FOLDER_PATH, key + '.json')
         with open(param_file_name, 'w') as f:
             json.dump(params, fp=f)
 
