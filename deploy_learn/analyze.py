@@ -74,7 +74,7 @@ def analyze_recent(seconds=0, minutes=0, hours=0, days=0, delta=None, **kwargs):
 def analyze(local_dir=None, start_time=None,
             print_individual_trials=False, create_plot=True,
             most_recent_n=None, least_recent_n=None,
-            error_window=1):
+            error_window=1, error_thresh=-0.05):
     """analyze log files
 
     Args:
@@ -120,6 +120,7 @@ def analyze(local_dir=None, start_time=None,
         except BadLogFileException as e:
             print("failed to parse {log_folder} due to '{error}'".format(log_folder=log_folder,
                                                                          error=e))
+            continue
         parsed_content[log_folder] = parsed
 
     # parse content of each individual log file and fill a data store of
@@ -142,7 +143,7 @@ def analyze(local_dir=None, start_time=None,
 
         # store best error for this log
         try:
-            errors = data['acc']
+            errors = data['test_loss']
         except KeyError:
             raise Exception("accuracy is not in the data logs")
         try:
@@ -150,7 +151,7 @@ def analyze(local_dir=None, start_time=None,
         except ValueError:
             raise Exception("accuracies column in data log cannot be converted the floats")
         effective_error_window = min(len(errors), error_window)
-        smoothed_errors = [sum(window) / len(window) for window in
+        smoothed_errors = [-sum(window) / len(window) for window in
                            izip(*[islice(errors, i, None) for i in xrange(effective_error_window)])]
         best_epoch_idx, best_error = max_idx(smoothed_errors)
         error_all[log_i] = best_error
@@ -160,6 +161,12 @@ def analyze(local_dir=None, start_time=None,
                 key_name=key_name,
                 best_error=best_error,
                 best_epoch=best_epoch_idx)
+
+    # remove degenerate learners
+    idxs = [i for i, err in enumerate(error_all) if err > error_thresh]
+    for key in arg_all:
+        arg_all[key] = [arg_all[key][i] for i in idxs]
+    error_all = [error_all[i] for i in idxs]
 
     # analyze each parameter/argument
     outcomes = [None] * len(arg_all)
