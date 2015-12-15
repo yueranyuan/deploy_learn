@@ -1,3 +1,5 @@
+import Queue
+import threading
 import multiprocessing
 from time import sleep
 import traceback
@@ -19,9 +21,9 @@ class _PopJob():
         self.job_queue.task_done()
 
 
-class JobConsumer(multiprocessing.Process):
+class JobConsumer(threading.Thread):
     def __init__(self, job_queue, func, id='[no_name]'):
-        multiprocessing.Process.__init__(self)
+        threading.Thread.__init__(self)
         self.job_queue = job_queue
         self.id = id
         self.func = func
@@ -56,7 +58,8 @@ class Job():
 
 def do_jobs(ids, func, jobs, consumer_factory=JobConsumer):
     print 'running workers with ids: {}'.format(', '.join(ids))
-    job_queue = multiprocessing.JoinableQueue()
+    #job_queue = multiprocessing.JoinableQueue()
+    job_queue = Queue.Queue()
 
     # setup a consumer for every worker
     consumers = map(lambda id: consumer_factory(job_queue=job_queue, func=func, id=id), ids)

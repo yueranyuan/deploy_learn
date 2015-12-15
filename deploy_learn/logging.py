@@ -2,13 +2,14 @@ import os
 import csv
 import json
 
-LOG_FOLDER_PATH = 'logs'
+LOG_FOLDER_PATH = 'dev_logs'
 
 class TrialLog(object):
     def __init__(self, key, params):
         self.key = key
         self.lines = []
-        self.log_name = os.path.join(LOG_FOLDER_PATH, key + '.csv')
+        self.log_folder = os.path.join(LOG_FOLDER_PATH, key)
+        self.log_name = os.path.join(self.log_folder, 'log.csv')
         try:
             os.makedirs(os.path.dirname(self.log_name))
         except OSError:
@@ -16,9 +17,13 @@ class TrialLog(object):
         self.headers = []
 
         # write params
-        param_file_name = os.path.join(LOG_FOLDER_PATH, key + '.json')
+        param_file_name = os.path.join(self.log_folder, 'log.json')
         with open(param_file_name, 'w') as f:
             json.dump(params, fp=f)
+
+        # write meta
+        self.meta_file_name = os.path.join(self.log_folder, 'meta.json')
+        self.meta = {}
 
     def rewrite_all(self, headers):
         self.headers = headers
@@ -37,16 +42,20 @@ class TrialLog(object):
     def add_line(self, **kwargs):
         self.lines.append(kwargs)
         headers = sorted(kwargs.iterkeys())
-        print(self.lines)
         if headers != self.headers:
             self.rewrite_all(headers)
         else:
             self.write_obj(kwargs)
 
+    def write_meta(self, key, val):
+        self.meta[key] = val
+        with open(self.meta_file_name, 'w') as f:
+            json.dump(self.meta, fp=f)
+
     def savetxt(self, ending, obj):
         import numpy as np
-        np.savetxt(os.path.join('logs', self.key + ending), obj)
+        np.savetxt(os.path.join(self.log_folder, ending), obj)
 
     def savenp(self, ending, obj):
         import numpy as np
-        np.save(os.path.join('logs', self.key + ending), obj)
+        np.save(os.path.join(self.log_folder, ending), obj)

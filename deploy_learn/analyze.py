@@ -43,8 +43,14 @@ def parse_log_folder(log_base):
     if not all(os.path.exists(fn) for fn in (arg_file, log_file)):
         raise BadLogFileException('some log files necessary to analysis are not found')
 
-    args = json_arg_parser(arg_file)
-    data = csv_log_parser(log_file)
+    try:
+        args = json_arg_parser(arg_file)
+    except Exception as e:
+        raise BadLogFileException("could not read json parameters file. Exception: {}".format(e))
+    try:
+        data = csv_log_parser(log_file)
+    except Exception as e:
+        raise BadLogFileException("could not read csv data file. Exception: {}".format(e))
 
     if len(data) == 0 or len(args) == 0:
         raise BadLogFileException('some log files were not properly loaded')
@@ -74,7 +80,7 @@ def analyze_recent(seconds=0, minutes=0, hours=0, days=0, delta=None, **kwargs):
 def analyze(local_dir=None, start_time=None,
             print_individual_trials=False, create_plot=True,
             most_recent_n=None, least_recent_n=None,
-            error_window=1, error_thresh=-0.05):
+            error_window=1, error_thresh=-0.01):
     """analyze log files
 
     Args:
@@ -154,7 +160,7 @@ def analyze(local_dir=None, start_time=None,
         smoothed_errors = [-sum(window) / len(window) for window in
                            izip(*[islice(errors, i, None) for i in xrange(effective_error_window)])]
         best_epoch_idx, best_error = max_idx(smoothed_errors)
-        error_all[log_i] = best_error
+        error_all[log_i] = best_error / 16.0
 
         if print_individual_trials:
             print ("{key_name} achieved {best_error}% error on epoch #{best_epoch}").format(
@@ -166,7 +172,7 @@ def analyze(local_dir=None, start_time=None,
     idxs = [i for i, err in enumerate(error_all) if err > error_thresh]
     for key in arg_all:
         arg_all[key] = [arg_all[key][i] for i in idxs]
-    error_all = [error_all[i] for i in idxs]
+    error_all = np.array([error_all[i] for i in idxs])
 
     # analyze each parameter/argument
     outcomes = [None] * len(arg_all)
