@@ -64,23 +64,29 @@ def do_jobs(ids, func, jobs, consumer_factory=JobConsumer):
     # setup a consumer for every worker
     consumers = map(lambda id: consumer_factory(job_queue=job_queue, func=func, id=id), ids)
     for c in consumers:
+        c.daemon = True
         c.start()
 
-    # queue up the jobs
-    for j in jobs:
-        job_queue.put(j)
-    for i in range(len(consumers)):
-        job_queue.put(None)
+    try:
+        # queue up the jobs
+        for j in jobs:
+            job_queue.put(j)
+        for i in range(len(consumers)):
+            job_queue.put(None)
 
-    job_queue.join()
+        while True:
+            sleep(0.1)
+            if job_queue.empty():
+                break
+    except KeyboardInterrupt:
+        print("received Keyboard Interrupt. Exiting all worker threads without cleanup.")
+
     print('finished')
 
-
-def _slow_print(num, consumer='[some consumer]'):
-    sleep(20)
-    Log('doing task {num} on {consumer}'.format(num=num, consumer=consumer))
-
-if __name__ == '__main__':
+def _main():
+    def _slow_print(num, consumer='[some consumer]'):
+        sleep(20)
+        Log('doing task {num} on {consumer}'.format(num=num, consumer=consumer))
     # should return in a minute exactly
     job_queue = multiprocessing.JoinableQueue()
 
@@ -97,3 +103,6 @@ if __name__ == '__main__':
 
     job_queue.join()
     Log('finished')
+
+if __name__ == '__main__':
+    _main()
