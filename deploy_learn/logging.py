@@ -68,9 +68,9 @@ class TrialLog(object):
         log_folder_ending = os.path.split(self.log_folder)[-1]
         if dest_file_name is None:
             dest_file_name = log_folder_ending
-        dest = os.path.join(dest, dest_file_name)
+        dest_full = os.path.join(dest, dest_file_name)
 
         try:
-            shutil.copytree(self.log_folder, dest)
+            shutil.copytree(self.log_folder, dest_full)
         except shutil.Error:
             self.__cp_helper(dest, dest_file_name + '(1)')
