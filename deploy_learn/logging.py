@@ -59,3 +59,18 @@ class TrialLog(object):
     def savenp(self, ending, obj):
         import numpy as np
         np.save(os.path.join(self.log_folder, ending), obj)
+
+    def cp(self, dest, dest_file_name=None):
+        self.__cp_helper(dest, dest_file_name, n_tries_remain=10)
+
+    def __cp_helper(self, dest, dest_file_name=None, n_tries_remain=0):
+        import shutil
+        log_folder_ending = os.path.split(self.log_folder)[-1]
+        if dest_file_name is None:
+            dest_file_name = log_folder_ending
+        dest = os.path.join(dest, dest_file_name)
+
+        try:
+            shutil.copytree(self.log_folder, dest)
+        except shutil.Error:
+            self.__cp_helper(dest, dest_file_name + '(1)')
