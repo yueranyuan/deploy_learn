@@ -72,5 +72,8 @@ class TrialLog(object):
 
         try:
             shutil.copytree(self.log_folder, dest_full)
-        except shutil.Error:
-            self.__cp_helper(dest, dest_file_name + '(1)')
+        except shutil.Error as e:
+            if os.path.exists(dest_full):
+                self.__cp_helper(dest, dest_file_name + '(1)')
+            else:
+                raise e
